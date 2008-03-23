@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package packagerversion="1.4.1" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" 
+xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd 
+http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+ <name>sfPropelActAsSignableBehaviorPlugin</name>
+ <channel>pear.symfony-project.com</channel>
+ <summary>sfPropelActAsSignableBehaviorPlugin</summary>
+ <description>Adds support for "created_by", "updated_by" and "deleted_by" columns in your model</description>
+ <lead>
+  <name>Nicolas Chambrier &lt;naholyr@yahoo.fr&gt;</name>
+  <user>naholyr</user>
+  <email>naholyr@yahoo.fr</email>
+  <active>yes</active>
+ </lead>
+ <date>2008-03-23</date>
+ <version>
+   <release>0.1</release>
+   <api>0.1</api>
+ </version>
+ <stability>
+  <release>beta</release>
+  <api>beta</api>
+ </stability>
+ <license uri="http://www.symfony-project.com/license">MIT license</license>
+ <notes>-</notes>
+ <contents>
+  <dir name="/"><file role="data" name="LICENSE"/><file role="data" name="README"/><dir name="lib"><file role="data" name="sfPropelActAsSignableBehavior.class.php"/></dir><dir name="config"><file role="data" name="config.php"/></dir></dir>
+ </contents>
+
+ <dependencies>
+  <required>
+   <php>
+    <min>5.0.0</min>
+   </php>
+   <pearinstaller>
+    <min>1.4.1</min>
+   </pearinstaller>
+   <package>
+    <name>symfony</name>
+    <channel>pear.symfony-project.com</channel>
+    <min>1.0.0</min>
+    <max>1.1.0</max>
+   </package>
+  </required>
+ </dependencies>
+
+ <phprelease>
+ </phprelease>
+
+ <changelog>
+ </changelog>
+</package>
