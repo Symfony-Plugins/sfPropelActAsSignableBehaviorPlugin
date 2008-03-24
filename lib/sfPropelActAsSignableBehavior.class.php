@@ -11,13 +11,52 @@
  
 /**
  * This behavior automates the handling of "created_by" and "updated_by" columns
+ * 
+ * Full options array (every option is optional) :
+ * 
+ * sfPropelBehavior::add('Dummy', array(
+ *   'sfPropelActAsSignableBehavior' => array(
+ *     'columns' => array( // columns map
+ *       'created' => DummyPeer::CREATED_BY,
+ *       'updated' => DummyPeer::UPDATED_BY,
+ *       'deleted' => DummyPeer::DELETED_BY,
+ *     ),
+ *     'userMethods' => array( // user's methods to get string or int representation
+ *       'string' => '__toString',
+ *       'id'     => 'getId',
+ *     ),
+ *     'updateModifiedColumn' => false,
+ *     'updateEmptyColumn' => true,
+ *   )
+ * ));
+ * 
  *
  * @author  Nicolas Chambrier <naholyr@yahoo.fr>
  */
  
 class sfPropelActAsSignableBehavior
 {
-
+	
+	/**
+	 * If set to true, the *_by columns will be set, even if they're already
+	 * marked as modified.
+	 * 
+	 * @see sfPropelActAsSignableBehavior::$default_updateEmptyColumn
+	 *
+	 * @var boolean
+	 */
+	public static $default_updateModifiedColumn = false;
+	
+	/**
+	 * If set to true, the *_by columns will be set if they're empty, even if
+	 * they're marked as modified.
+	 * 
+	 * @see sfPropelActAsSignableBehavior::$default_updateModifiedColumn
+	 * 
+	 * @var boolean
+	 */
+	public static $default_updateEmptyColumn = true;
+	
 	/**
 	 * Is behavior enabled ?
 	 *
@@ -41,7 +80,7 @@ class sfPropelActAsSignableBehavior
 	 *
 	 * @var array
 	 */
-	private static $default_user_methods = array(
+	private static $default_userMethods = array(
 		'id'     => 'getId', 
 		'string' => '__toString'
 	);
@@ -81,17 +120,21 @@ class sfPropelActAsSignableBehavior
 	 */
 	public function preSave(BaseObject $object)
 	{
+		// Automaticaly re-enable behavior
 		if (!self::enabled()) {
 			self::enable();
 			return false;
 		}
 		
+		// Get user from context, if available
 		$user = sfContext::getInstance()->getUser();
 		
+		// Created by...
 		if ($object->isNew()) {
 			self::setSomethingBy($object, 'created', $user);
 		}
 		
+		// Updated by...
 		if ($object->isModified()) {
 			self::setSomethingBy($object, 'updated', $user);
 		}
@@ -104,13 +147,16 @@ class sfPropelActAsSignableBehavior
 	 */
 	public function preDelete(BaseObject $object)
 	{
+		// Automaticaly re-enable behavior
 		if (!self::enabled()) {
 			self::enable();
 			return false;
 		}
 		
+		// Get user from context
 		$user = sfContext::getInstance()->getUser();
 		
+		// Deleted by...
 		self::setSomethingBy($object, 'deleted', $user);
 	}
 	
@@ -125,7 +171,27 @@ class sfPropelActAsSignableBehavior
 	{
 		$class = get_class($object);
 		
-		switch (self::getColumnType($class, $what)) {
+		// Check if the column is authorized to be updated, depending on the behavior options
+		$column = self::getColumnConstant($object, $what);
+		$updateModifiedColumn = sfConfig::get('propel_behavior_sfPropelActAsSignableBehavior_' . $class . '_updateModifiedColumn', self::$default_updateModifiedColumn);
+		if (!$updateModifiedColumn && $object->isColumnModified($column)) {
+			// we're not allowed to update modified column, and this one is modified
+			$updateEmptyColumn = sfConfig::get('propel_behavior_sfPropelActAsSignableBehavior_' . $class . '_updateEmptyColumn', self::$default_updateEmptyColumn);
+			if (!$updateEmptyColumn) {
+				// we don't check if the column is empty, let's stop here
+				return false;
+			} else {
+				// we skip only if the column is not empty
+				$getter = self::forgeMethodName($object, 'get', $what);
+				$value = call_user_func(array($object, $getter));
+				if (!empty($value)) {
+					return false;
+				}
+			}
+		}
+		
+		// Retrieve column's type and get the corresponding user's value
+		switch (self::getColumnType($object, $what)) {
 			case null:       // Column not found : ignore
 				return false;
 			case 'int':      // integer : set with id
@@ -138,6 +204,7 @@ class sfPropelActAsSignableBehavior
 				throw new sfException('[sfPropelActAsSignable] column "' . $what . '" must be int or string');
 		}
 		
+		// Set the value
 		$setter = self::forgeMethodName($object, 'set', $what);
 		
 		return call_user_func(array($object, $setter), $value);
@@ -154,8 +221,13 @@ class sfPropelActAsSignableBehavior
 	 */
 	private static function getUserInfo($class, myUser $user, $info)
 	{
-		$methods = sfConfig::get('propel_behavior_sfPropelActAsSignableBehavior_' . $class . '_user_methods', self::$default_user_methods);
-		$method = $methods[$info];
+		$methods = sfConfig::get('propel_behavior_sfPropelActAsSignableBehavior_' . $class . '_userMethods', array());
+		
+		if (array_key_exists($info, $methods)) {
+			$method = $methods[$info];
+		} else {
+			$method = self::$default_userMethods[$info];
+		}
 		
 		return call_user_func(array($user, $method));
 	}
@@ -163,19 +235,25 @@ class sfPropelActAsSignableBehavior
 	/**
 	 * Returns the appropriate column name.
 	 * 
-	 * @param   string   $class                    Propel model class
-	 * @param   string   $column                   Column name
+	 * @param   BaseObject   $object                   Propel object
+	 * @param   string       $column                   Column name
 	 * 
-	 * @return  string   Column's name
+	 * @return  string       Column's name
 	 */
-	private static function getColumnConstant($class, $column)
+	private static function getColumnConstant(BaseObject $object, $column)
 	{
-		$columns = sfConfig::get('propel_behavior_sfPropelActAsSignableBehavior_' . $class . '_columns', self::$default_columns);
+		$class = get_class($object);
 		
-		$column = $columns[$column];
+		$columns = sfConfig::get('propel_behavior_sfPropelActAsSignableBehavior_' . $class . '_columns', array());
+		
+		if (array_key_exists($column, $columns)) {
+			$column = $columns[$column];
+		} else {
+			$column = self::$default_columns[$column];
+		}
 		
 		// Check that the column is prefixed, if not, prefix it with table name
-		$table_name = constant($class . 'Peer::TABLE_NAME');
+		$table_name = $object->getPeer()->getTableMap()->getName();
 		if (substr($column, 0, strlen($table_name)+1) != $table_name . '.') {
 			$column = $table_name . '.' . strtoupper($column);
 		}
@@ -186,23 +264,17 @@ class sfPropelActAsSignableBehavior
 	/**
 	 * Returns type for one column of the given class
 	 *
-	 * @param string       $class                 Propel model class
+	 * @param BaseObject   $object                Propel object
 	 * @param string       $column                Column name
 	 * 
 	 * @return string
 	 */
-	private static function getColumnType($class, $column)
+	private static function getColumnType(BaseObject $object, $column)
 	{
-		$mapBuilderClass = $class . 'MapBuilder';
-		
-		$mapBuilder = new $mapBuilderClass;
-		$mapBuilder->doBuild();
-		$map = $mapBuilder->getDatabaseMap();
-		
-		$table = $map->getTable(constant($class . 'Peer::TABLE_NAME'));
+		$table = $object->getPeer()->getTableMap();
 		
 		try {
-			$column = $table->getColumn(self::getColumnConstant($class, $column));
+			$column = $table->getColumn(self::getColumnConstant($object, $column));
 			$type = $column->getType();
 		} catch (PropelException $e) {
 			$type = null;
@@ -220,7 +292,7 @@ class sfPropelActAsSignableBehavior
 	 */
 	private static function forgeMethodName(BaseObject $object, $prefix, $column)
 	{
-		$column_constant = self::getColumnConstant(get_class($object), $column);
+		$column_constant = self::getColumnConstant($object, $column);
 		$method_name = $prefix . $object->getPeer()->translateFieldName($column_constant, BasePeer::TYPE_COLNAME, BasePeer::TYPE_PHPNAME);
 		
 		return $method_name;

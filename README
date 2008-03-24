@@ -14,6 +14,8 @@ For example it could be used by forum posts, blog articles and comments, etc…
     {{{
       symfony plugin-install http://plugins.symfony-project.com/sfPropelActAsSignableBehaviorPlugin
     }}}
+    
+    Like any other plugin, you can either extract one of the attached archives, or use Subversion.
   
   * Add the desired columns to your schema.yml for the tables you want to be signed. You can use a string or 
     an int type, the behavior will automatically detect the type and store the corresponding information 
@@ -65,23 +67,11 @@ For example it could be used by forum posts, blog articles and comments, etc…
                              'updated' => ForumPostPeer::UPDATED_BY);
         
         sfPropelBehavior::add('ForumPost', array(
-          'sfPropelActAsSluggableBehavior' => array(
+          'sfPropelActAsSignableBehavior' => array(
             'columns' => $columns_map
           )
         ); 
     }}}
-    
-    The `columns map` is used by the behavior to know which columns hold information it needs :
-
-      * created : Model column holding the creator of the object, default is `created_by`.
-      * updated : Model column holding the last user who updated the object, default is `updated_by`.
-      * deleted : Model column holding the user who deleted the object, default is `deleted_by`.
-
-    The `user methods` is used by the behavior to know what method of the `myUser` class must be called
-    to retrieve the wanted information.
-    
-      * id :     Method called to retrieve the user's ID, to fill integer `*_by` columns, default is `getId()`.
-      * string : Method called to retrieve the string representation of the user, to fill string `*_by` columns, default is `__toString()`.
     
   * Add the needed methods to your `myUser` class (file located in `apps/myApp/lib/myUser.class.php`) :
     
@@ -97,6 +87,61 @@ For example it could be used by forum posts, blog articles and comments, etc…
         return $this->getGuardUser()->getId(); 
       }
     }}}
+    
+    You can use different names for those methods, you can even use different methods for each
+    of your "signable" tables : See next section (options).
+
+=== Options ===
+
+The generic way to add the behavior to your table is 
+
+{{{
+  sfPropelBehavior::add('MyClass', array(
+    'sfPropelActAsSignableBehavior' => $options
+  ); 
+}}}
+    
+The `$options` array represents the options passed to customize the behavior to your needs. 
+
+The __`columns`__ index represents the columns mapping, which is used by the behavior to know which columns 
+hold information it needs :
+
+  * __`created`__ : Model column holding the creator of the object, default is `created_by`.
+  * __`updated`__ : Model column holding the last user who updated the object, default is `updated_by`.
+  * __`deleted`__ : Model column holding the user who deleted the object, default is `deleted_by`.
+
+The __`userMethods`__ index is used by the behavior to know what method of the `myUser` class must be called
+to retrieve the wanted information.
+
+  * __`id`__ :     Method called to retrieve the user's ID, to fill integer `*_by` columns, default is `getId()`.
+  * __`string`__ : Method called to retrieve the string representation of the user, to fill string `*_by` columns, default is `__toString()`.
+
+The __`updateModifiedColumn`__ is set to true if you want the behavior to overwrite the value of columns
+even if they are already marked as modified (i.e. if you set this option to true, you will not be able to
+customize the value of those columns in your auto-generated admin modules). Default value is false.
+
+The __`updateEmptyColumn`__ is set to true if you want the behavior to set the value of empty columns, even
+if they are already marked sas modified (i.e. if you set this option to true, your username will be stored
+if you let the field empty in your auto-generated admin modules). Default value is true.
+
+The full options are represented here with their default values :
+
+{{{
+  array(
+    'columns' => array(
+      'created' => 'created_by',
+      'updated' => 'updated_by',
+      'deleted' => 'deleted_by',
+    ),
+    'userMethods' => array(
+      'string' => '__toString',
+      'id'     => 'getId',
+    ),
+    'updateModifiedColumn' => false,
+    'updateEmptyColumn' => true,
+  )
+}}}
+
 
 == Dependencies ==
 
