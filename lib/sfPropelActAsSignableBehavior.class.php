@@ -92,6 +92,11 @@ class sfPropelActAsSignableBehavior
 	 */
 	public static function enabled()
 	{
+	  if (array_key_exists('SHELL', $_ENV)) {
+      // CLI
+      return false;
+	  }
+	  
 		return self::$_enabled;
 	}
 	
@@ -221,6 +226,10 @@ class sfPropelActAsSignableBehavior
 	 */
 	private static function getUserInfo($class, myUser $user, $info)
 	{
+	  if (!$user) {
+	    return null;
+	  }
+	  
 		$methods = sfConfig::get('propel_behavior_sfPropelActAsSignableBehavior_' . $class . '_userMethods', array());
 		
 		if (array_key_exists($info, $methods)) {
@@ -274,8 +283,19 @@ class sfPropelActAsSignableBehavior
 		$table = $object->getPeer()->getTableMap();
 		
 		try {
-			$column = $table->getColumn(self::getColumnConstant($object, $column));
-			$type = $column->getType();
+		  $column = $table->getColumn(self::getColumnConstant($object, $column));
+		  switch ($column->getCreoleType()) {
+		    case CreoleTypes::BIGINT:
+		    case CreoleTypes::INTEGER:
+		    case CreoleTypes::NUMERIC:
+		    case CreoleTypes::SMALLINT:
+		    case CreoleTypes::TINYINT:
+          $type = 'int';
+          break;
+		    default:
+		      $type = $column->getType();
+		      break;
+		  }
 		} catch (PropelException $e) {
 			$type = null;
 		}
