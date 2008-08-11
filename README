@@ -28,7 +28,7 @@ For example it could be used by forum posts, blog articles and comments, etc…
       # Will store the username
       created_by:      varchar(255)
       
-      # Will store the user ID 'as-is'
+      # Will store the user ID 'as is'
       created_by:      int
       
       # Example to use with sfGuardPlugin
