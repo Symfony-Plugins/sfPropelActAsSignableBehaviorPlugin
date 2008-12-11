@@ -58,6 +58,11 @@ class sfPropelActAsSignableBehavior
 	public static $default_updateEmptyColumn = true;
 	
 	/**
+	 * If set to true, the behavior will be enabled, even in CLI context
+	 */
+	public static $enabledInCLI = false;
+	
+	/**
 	 * Is behavior enabled ?
 	 *
 	 * @var boolean
@@ -94,7 +99,7 @@ class sfPropelActAsSignableBehavior
 	{
 	  if (array_key_exists('SHELL', $_ENV)) {
       // CLI
-      return false;
+      return self::$enabledInCLI;
 	  }
 	  
 		return self::$_enabled;
