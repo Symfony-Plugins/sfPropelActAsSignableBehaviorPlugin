@@ -97,7 +97,7 @@ class sfPropelActAsSignableBehavior
 	 */
 	public static function enabled()
 	{
-	  if (array_key_exists('SHELL', $_ENV)) {
+	  if (sfContext::getInstance()->getController()->inCLI()) {
       // CLI
       return self::$enabledInCLI;
 	  }
