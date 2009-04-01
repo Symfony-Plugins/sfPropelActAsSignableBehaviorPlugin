@@ -12,3 +12,8 @@ sfPropelBehavior::registerHooks('sfPropelActAsSignableBehavior', array (
   ':save:pre' => array ('sfPropelActAsSignableBehavior', 'preSave'),
   ':delete:pre' => array ('sfPropelActAsSignableBehavior', 'preDelete'),
 ));
+
+sfPropelBehavior::registerHooks('signable', array (
+  ':save:pre' => array ('sfPropelActAsSignableBehavior', 'preSave'),
+  ':delete:pre' => array ('sfPropelActAsSignableBehavior', 'preDelete'),
+));
