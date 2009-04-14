@@ -8,19 +8,19 @@ http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
  <summary>sfPropelActAsSignableBehaviorPlugin</summary>
  <description>Adds support for "created_by", "updated_by" and "deleted_by" columns in your model</description>
  <lead>
-  <name>Nicolas Chambrier &lt;naholyr@yahoo.fr&gt;</name>
+  <name>Nicolas Chambrier (naholyr)</name>
   <user>naholyr</user>
   <email>naholyr@yahoo.fr</email>
   <active>yes</active>
  </lead>
- <date>2008-03-24</date>
+ <date>2009-04-14</date>
  <version>
-   <release>0.2</release>
-   <api>0.2</api>
+   <release>1.0.0</release>
+   <api>1.0.0</api>
  </version>
  <stability>
-  <release>beta</release>
-  <api>beta</api>
+  <release>stable</release>
+  <api>stable</api>
  </stability>
  <license uri="http://www.symfony-project.com/license">MIT license</license>
  <notes>-</notes>
@@ -40,7 +40,7 @@ http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
     <name>symfony</name>
     <channel>pear.symfony-project.com</channel>
     <min>1.0.0</min>
-    <max>1.1.0</max>
+    <max>1.2.0</max>
    </package>
   </required>
  </dependencies>
