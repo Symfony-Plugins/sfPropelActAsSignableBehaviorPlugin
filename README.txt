@@ -1,0 +1,1 @@
+For better clarity in the versions, the "trunk" folder of the plugin's repository is now available as "branches/1.0"
